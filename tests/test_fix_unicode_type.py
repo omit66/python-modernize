@@ -1,28 +1,19 @@
-from __future__ import absolute_import
-
-from utils import check_on_input
+from fixertestcase import FixerTestCase
 
 
-UNICODE_TYPE_REF = ("""\
-isinstance(u'str', unicode)
-""", """\
-from __future__ import absolute_import
-import six
-isinstance(u'str', six.text_type)
-""")
+class Test_unicode(FixerTestCase):
+    fixer = "unicode_type"
 
-UNICODE_TYPE_CALL = ("""\
-unicode(x)
-""", """\
-from __future__ import absolute_import
-import six
-six.text_type(x)
-""")
+    def test_whitespace(self):
+        b = """unicode( x)"""
+        a = """import six\nsix.text_type( x)"""
+        self.check(b, a)
 
+        b = """ unicode(x )"""
+        a = """import six\nsix.text_type(x )"""
+        self.check(b, a)
 
-def test_unicode_type_ref():
-    check_on_input(*UNICODE_TYPE_REF)
-
-
-def test_unicode_type_call():
-    check_on_input(*UNICODE_TYPE_CALL)
+    def test_unicode_call(self):
+        b = """unicode(x, y, z)"""
+        a = """import six\nsix.text_type(x, y, z)"""
+        self.check(b, a)

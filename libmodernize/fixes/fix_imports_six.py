@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+# Taken from libmodernize
 from lib2to3.fixes import fix_imports
 
 
@@ -56,7 +56,7 @@ class FixImportsSix(fix_imports.FixImports):
         'tkSimpleDialog': 'six.moves.tkinter_tksimpledialog',
         'ttk': 'six.moves.tkinter_ttk',
         # urllib
-        'urlparse' : 'six.moves.urllib.parse',
+        'urlparse': 'six.moves.urllib.parse',
         # UserDict.UserDict
         # UserList.UserList
         # UserString.UserString

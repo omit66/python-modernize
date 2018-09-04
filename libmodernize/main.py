@@ -16,7 +16,9 @@ from lib2to3.main import warn, StdoutRefactoringTool
 from lib2to3 import refactor
 
 from libmodernize import __version__
-from libmodernize.fixes import lib2to3_fix_names, six_fix_names, opt_in_fix_names
+from libmodernize.fixes import six_fix_names, opt_in_fix_names, \
+    libmodernize_fix_names_stage1, lib2to3_fix_names_stage1, \
+    libmodernize_fix_names_stage2, lib2to3_fix_names_stage2
 
 usage = __doc__ + """\
  %s
@@ -48,9 +50,11 @@ def main(args=None):
     parser.add_option("-d", "--doctests_only", action="store_true",
                       help="Fix up doctests only.")
     parser.add_option("-f", "--fix", action="append", default=[],
-                      help="Each FIX specifies a transformation; '-f default' includes default fixers.")
+                      help="Each FIX specifies a transformation; '-f default' "
+                           "includes default fixers.")
     parser.add_option("--fixers-here", action="store_true",
-                      help="Add current working directory to python path (so fixers can be found)")
+                      help="Add current working directory to python path (so "
+                           "fixers can be found)")
     parser.add_option("-j", "--processes", action="store", default=1,
                       type="int", help="Run 2to3 concurrently.")
     parser.add_option("-x", "--nofix", action="append", default=[],
@@ -69,17 +73,40 @@ def main(args=None):
     parser.add_option("--no-six", action="store_true", default=False,
                       help="Exclude fixes that depend on the six package.")
     parser.add_option("--enforce", action="store_true", default=False,
-                      help="Returns non-zero exit code of any fixers had to be applied.  "
-                           "Useful for enforcing Python 3 compatibility.")
-
-    fixer_pkg = 'libmodernize.fixes'
-    avail_fixes = set(refactor.get_fixers_from_package(fixer_pkg))
-    avail_fixes.update(lib2to3_fix_names)
+                      help="Returns non-zero exit code of any fixers had to be"
+                           "applied. Useful for enforcing Python 3 compatibility.")
+    parser.add_option("-1", "--stage1", action="store_true",
+                      help="Modernize Python 2 code only and does not any critical changes.")
+    parser.add_option("-2", "--stage2", action="store_true",
+                      help="Take modernized (stage1) code and to provide Py3"
+                           "compatibility. This changes should be reviewed!")
+    parser.add_option("-0", "--both-stages", action="store_true",
+                      help="Apply both stages 1 and 2")
 
     # Parse command line arguments
     refactor_stdin = False
     flags = {}
     options, args = parser.parse_args(args)
+
+    # do not use every fixer as default
+    # fixer_pkg = 'libmodernize.fixes'
+    # avail_fixes = set(refactor.get_fixers_from_package(fixer_pkg))
+    # avail_fixes.update(lib2to3_fix_names)
+    avail_fixes = set()
+
+    if options.stage1 or options.stage2:
+        assert options.both_stages is None
+        options.both_stages = False
+    else:
+        options.both_stages = True
+
+    if options.stage1 or options.both_stages:
+        avail_fixes.update(lib2to3_fix_names_stage1)
+        avail_fixes.update(libmodernize_fix_names_stage1)
+    if options.stage2 or options.both_stages:
+        avail_fixes.update(lib2to3_fix_names_stage2)
+        avail_fixes.update(libmodernize_fix_names_stage2)
+
     if not options.write and options.no_diffs:
         warn("Not writing files and not printing diffs; that's not very useful.")
     if not options.write and options.nobackups:
@@ -163,7 +190,8 @@ def main(args=None):
     else:
         requested = default_fixes
     fixer_names = requested.difference(unwanted_fixes)  # Filter out unwanted fixers
-    explicit = explicit.intersection(fixer_names)  # Filter `explicit` fixers vs remaining fixers
+    # Filter `explicit` fixers vs remaining fixers
+    explicit = explicit.intersection(fixer_names)
 
     print(" Loading the following fixers:", file=sys.stderr)
     if fixer_names:
@@ -174,7 +202,8 @@ def main(args=None):
     print(" Applying the following explicit transformations:", file=sys.stderr)
     if explicit:
         for fixname in sorted(explicit):
-            print("    {}  ({})".format(fixname, fixname.split(".fix_", 1)[1]), file=sys.stderr)
+            print("    {}  ({})".format(fixname, fixname.split(".fix_", 1)[1]),
+                  file=sys.stderr)
     else:
         print("    (None)", file=sys.stderr)
     print(file=sys.stderr)
@@ -189,7 +218,7 @@ def main(args=None):
             try:
                 rt.refactor(args, options.write, options.doctests_only,
                             options.processes)
-            except refactor.MultiprocessingUnsupported: # pragma: no cover
+            except refactor.MultiprocessingUnsupported:  # pragma: no cover
                 assert options.processes > 1
                 print("Sorry, -j isn't supported on this platform.",
                       file=sys.stderr)
@@ -198,8 +227,8 @@ def main(args=None):
 
     # Return error status (0 if rt.errors is zero)
     return_code = int(bool(rt.errors))
-    # If we are enforcing python 3 compatibility, return a non-zero exit code if we had to modify
-    # any files.
+    # If we are enforcing python 3 compatibility, return a non-zero exit code
+    # if we had to modify any files.
     if options.enforce and rt.files:
         return_code |= 2
     return return_code

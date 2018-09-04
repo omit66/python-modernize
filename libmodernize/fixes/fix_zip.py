@@ -1,17 +1,42 @@
-# Copyright 2008 Armin Ronacher.
-# Licensed to PSF under a Contributor Agreement.
-from __future__ import absolute_import
+"""
+Fixer that changes zip(seq0, seq1, ...) into
+list(six.moves.zip(seq0, seq1, ...) unless there exists a
+'from six.moves import zip' statement in the top-level namespace.
 
-from lib2to3.fixes import fix_zip
-import libmodernize
+We avoid the transformation if the zip() call is directly contained in
+iter(<>), list(<>), tuple(<>), sorted(<>), ...join(<>), or for V in <>:.
+Extended by CONTACT Software GmbH
+"""
 
-class FixZip(fix_zip.FixZip):
+# Local imports
+from lib2to3 import fixer_base
+from lib2to3.fixer_util import Name, Call, in_special_context
+
+from lib2to3.fixer_util import touch_import
+
+
+class FixZip(fixer_base.ConditionalFix):
+
+    BM_compatible = True
+    PATTERN = """
+    power< name='zip' args=trailer< '(' [any] ')' >
+    >
+    """
 
     skip_on = "six.moves.zip"
 
     def transform(self, node, results):
-        result = super(FixZip, self).transform(node, results)
-        # Always use six.moves.zip so that even Python 2.7 gets performance
-        # boost from using itertools in iterator contexts.
-        libmodernize.touch_import(u'six.moves', u'zip', node)
-        return result
+        if self.should_skip(node):
+            return
+
+        if in_special_context(node):
+            return None
+
+        touch_import(None, u'six', node)
+        name = results['name']
+        name.replace(Name(u'six.moves.zip', name.prefix))
+        new = node.clone()
+        new.prefix = u""
+        new = Call(Name(u"list"), [new])
+        new.prefix = node.prefix
+        return new

@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from utils import check_on_input
+from .utils import check_on_input
 
 
 CLASSIC_DIVISION = ("""\

@@ -1,62 +1,92 @@
-from __future__ import absolute_import
 
-from utils import check_on_input
-
-
-INPUT = ("""\
-input()
-""", """\
-from __future__ import absolute_import
-from six.moves import input
-eval(input())
-""")
-
-INPUT_ARGS = ("""\
-input('hello')
-""", """\
-from __future__ import absolute_import
-from six.moves import input
-eval(input('hello'))
-""")
-
-RAW_INPUT = ("""\
-raw_input()
-""", """\
-from __future__ import absolute_import
-from six.moves import input
-input()
-""")
-
-RAW_INPUT_TRAILER = ("""\
-raw_input()[0]
-""", """\
-from __future__ import absolute_import
-from six.moves import input
-input()[0]
-""")
-
-RAW_INPUT_INPUT = ("""\
-raw_input()
-input()
-""", """\
-from __future__ import absolute_import
-from six.moves import input
-input()
-eval(input())
-""")
+from fixertestcase import FixerTestCase
 
 
-def test_input():
-    check_on_input(*INPUT)
+class Test_input(FixerTestCase):
+    fixer = "input_six"
 
-def test_input_args():
-    check_on_input(*INPUT_ARGS)
+    def test_prefix_preservation(self):
+        b = """x =    raw_input(   )"""
+        a = """import six\nx =    six.moves.input(   )"""
+        self.check(b, a)
 
-def test_raw_input():
-    check_on_input(*RAW_INPUT)
+        b = """x = raw_input(   ''   )"""
+        a = """import six\nx = six.moves.input(   ''   )"""
+        self.check(b, a)
 
-def test_raw_input_trailer():
-    check_on_input(*RAW_INPUT_TRAILER)
+        b = """x =   input(   )"""
+        a = """import six\nx =   eval(six.moves.input(   ))"""
+        self.check(b, a)
 
-def test_raw_input_input():
-    check_on_input(*RAW_INPUT_INPUT)
+        b = """x = input(   ''   )"""
+        a = """import six\nx = eval(six.moves.input(   ''   ))"""
+        self.check(b, a)
+
+    def test_1(self):
+        b = """x = raw_input()"""
+        a = """import six\nx = six.moves.input()"""
+        self.check(b, a)
+
+        b = """x = input()"""
+        a = """import six\nx = eval(six.moves.input())"""
+        self.check(b, a)
+
+    def test_2(self):
+        b = """x = raw_input('')"""
+        a = """import six\nx = six.moves.input('')"""
+        self.check(b, a)
+
+        b = """x = input('')"""
+        a = """import six\nx = eval(six.moves.input(''))"""
+        self.check(b, a)
+
+    def test_3(self):
+        b = """x = raw_input('prompt')"""
+        a = """import six\nx = six.moves.input('prompt')"""
+        self.check(b, a)
+
+        b = """x = input('prompt')"""
+        a = """import six\nx = eval(six.moves.input('prompt'))"""
+        self.check(b, a)
+
+    def test_4(self):
+        b = """x = raw_input(foo(a) + 6)"""
+        a = """import six\nx = six.moves.input(foo(a) + 6)"""
+        self.check(b, a)
+
+        b = """x = input(foo(5) + 9)"""
+        a = """import six\nx = eval(six.moves.input(foo(5) + 9))"""
+        self.check(b, a)
+
+    def test_5(self):
+        b = """x = raw_input(invite).split()"""
+        a = """import six\nx = six.moves.input(invite).split()"""
+        self.check(b, a)
+
+    def test_6(self):
+        b = """x = raw_input(invite) . split ()"""
+        a = """import six\nx = six.moves.input(invite) . split ()"""
+        self.check(b, a)
+
+    def test_8(self):
+        b = "x = int(raw_input())"
+        a = "import six\nx = int(six.moves.input())"
+        self.check(b, a)
+
+    def test_trailing_comment(self):
+        b = """x = input()  #  foo"""
+        a = """import six\nx = eval(six.moves.input())  #  foo"""
+        self.check(b, a)
+
+    def test_wrapped_input(self):
+        b = """x = eval(input())"""
+        a = """import six\nx = eval(six.moves.input())"""
+        self.check(b, a)
+
+        b = """x = eval(input(''))"""
+        a = """import six\nx = eval(six.moves.input(''))"""
+        self.check(b, a)
+
+        b = """x = eval(input(foo(5) + 9))"""
+        a = """import six\nx = eval(six.moves.input(foo(5) + 9))"""
+        self.check(b, a)

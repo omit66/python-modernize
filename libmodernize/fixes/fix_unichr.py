@@ -1,9 +1,7 @@
-from __future__ import absolute_import
-
 from lib2to3 import fixer_base
-from lib2to3.fixer_util import is_probably_builtin
+from lib2to3.fixer_util import is_probably_builtin, Name
 
-import libmodernize
+from lib2to3.fixer_util import touch_import
 
 
 class FixUnichr(fixer_base.ConditionalFix):
@@ -16,4 +14,5 @@ class FixUnichr(fixer_base.ConditionalFix):
         if self.should_skip(node):
             return
         if is_probably_builtin(node):
-            libmodernize.touch_import(u'six', u'unichr', node)
+            touch_import(None, u'six', node)
+            node.replace(Name(u'six.unichr', node.prefix))

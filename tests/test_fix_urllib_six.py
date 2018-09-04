@@ -1,82 +1,107 @@
-from __future__ import absolute_import
-
-from utils import check_on_input
+from fixertestcase import FixerTestCase
 
 
-URLLIB_MODULE_REFERENCE = ("""\
-import urllib
-urllib.quote_plus('hello world')
-""", """\
-from __future__ import absolute_import
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
-six.moves.urllib.parse.quote_plus('hello world')
-""")
+class Test_urllib(FixerTestCase):
+    fixer = "urllib_six"
+    from libfuturize.fixes.fix_urllib import MAPPING as modules
 
+    def test_import_module(self):
+        for old, changes in self.modules.items():
+            b = "import %s" % old
+            a = "import six"
+            self.check(b, a)
 
-URLLIB_FUNCTION_REFERENCE = ("""\
-from urllib2 import urlopen
-urlopen('https://www.python.org')
-""", """\
-from __future__ import absolute_import
-from six.moves.urllib.request import urlopen
-urlopen('https://www.python.org')
-""")
+    def test_import_from(self):
+        for old, changes in self.modules.items():
+            all_members = []
+            for new, members in changes:
+                for member in members:
+                    all_members.append(member)
+                    b = "from %s import %s" % (old, member)
+                    a = "from %s import %s" % (new, member)
+                    self.check(b, a)
 
+                    s = "from foo import %s" % member
+                    self.unchanged(s)
 
-URLLIB_MULTI_IMPORT_REFERENCE = ("""\
-from urllib2 import HTTPError, urlopen
-""", """\
-from __future__ import absolute_import
-from six.moves.urllib.error import HTTPError
-from six.moves.urllib.request import urlopen
-""")
+                b = "from %s import %s" % (old, ", ".join(members))
+                a = "from %s import %s" % (new, ", ".join(members))
+                self.check(b, a)
 
+                s = "from foo import %s" % ", ".join(members)
+                self.unchanged(s)
 
-URLLIB_IMPORT_AS = ("""\
-from urllib2 import urlopen as urlo
-from urllib2 import HTTPError, URLError as urle
-""", """\
-from __future__ import absolute_import
-from six.moves.urllib.request import urlopen as urlo
-from six.moves.urllib.error import HTTPError, URLError as urle
-""")
+            # test the breaking of a module into multiple replacements
+            b = "from %s import %s" % (old, ", ".join(all_members))
+            a = "\n".join(["from %s import %s" % (new, ", ".join(members))
+                          for (new, members) in changes])
+            self.check(b, a)
 
+    def test_import_module_as(self):
+        for old in self.modules:
+            s = "import %s as foo" % old
+            self.warns_unchanged(s, "This module is now multiple modules")
 
-# Can't be converted; translation would emit a warning.
-URLIB_INVALID_CODE = ("""\
-from urllib2 import *
-from urllib2 import foobarraz
-from urllib2 import foo, bar as raz
-import urllib as urllib_py2
-import urllib
-urllib.foobarraz('hello world')
-""", """\
-from __future__ import absolute_import
-from urllib2 import *
-from urllib2 import foobarraz
-from urllib2 import foo, bar as raz
-import urllib as urllib_py2
-import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
-urllib.foobarraz('hello world')
-""")
+    def test_import_from_as(self):
+        for old, changes in self.modules.items():
+            for new, members in changes:
+                for member in members:
+                    b = "from %s import %s as foo_bar" % (old, member)
+                    a = "from %s import %s as foo_bar" % (new, member)
+                    self.check(b, a)
+                    b = "from %s import %s as blah, %s" % (old, member, member)
+                    a = "from %s import %s as blah, %s" % (new, member, member)
+                    self.check(b, a)
 
+    def test_star(self):
+        for old in self.modules:
+            s = "from %s import *" % old
+            self.warns_unchanged(s, "Cannot handle star imports")
 
-def test_urllib_module_reference():
-    check_on_input(*URLLIB_MODULE_REFERENCE)
+    def test_indented(self):
+        b = """
+def foo():
+    from urllib import urlencode, urlopen
+"""
+        a = """
+def foo():
+    from six.moves.urllib.parse import urlencode
+    from six.moves.urllib.request import urlopen
+"""
+        self.check(b, a)
 
+        b = """
+def foo():
+    other()
+    from urllib import urlencode, urlopen
+"""
+        a = """
+def foo():
+    other()
+    from six.moves.urllib.parse import urlencode
+    from six.moves.urllib.request import urlopen
+"""
+        self.check(b, a)
 
-def test_urllib_function_reference():
-    check_on_input(*URLLIB_FUNCTION_REFERENCE)
-
-
-def test_urllib_multi_import():
-    check_on_input(*URLLIB_MULTI_IMPORT_REFERENCE)
-
-
-def test_urllib_import_as():
-    check_on_input(*URLLIB_IMPORT_AS)
-
-
-def test_urllib_invalid_imports():
-    check_on_input(*URLIB_INVALID_CODE)
-
+    def test_import_module_usage(self):
+        for old, changes in self.modules.items():
+            for new, members in changes:
+                for member in members:
+                    b = """
+                        import %s
+                        foo(%s.%s)
+                        """ % (old, old, member)
+                    a = """
+                        import six
+                        foo(%s.%s)
+                        """ % (new, member)
+                    self.check(b, a)
+                    b = """
+                        import %s
+                        %s.%s(%s.%s)
+                        """ % (old, old, member, old, member)
+                    a = """
+                        import six
+                        %s.%s(%s.%s)
+                        """ % (new, member, new, member)
+                    self.check(b, a)

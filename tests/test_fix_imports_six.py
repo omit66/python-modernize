@@ -1,57 +1,102 @@
-from __future__ import absolute_import
-
-import sys
-import unittest
-
-try:
-    from six.moves import tkinter
-except ImportError:
-    tkinter = None
-
-from libmodernize.fixes import fix_imports_six
-
-from utils import check_on_input
+from fixertestcase import FixerTestCase
 
 
-MOVED_MODULE = ("""\
-import ConfigParser
-ConfigParser.ConfigParser()
-""", """\
-from __future__ import absolute_import
-import six.moves.configparser
-six.moves.configparser.ConfigParser()
-""")
+class Test_imports_six(FixerTestCase):
+    fixer = "imports_six"
+    from libfuturize.fixes.fix_imports_six import FixImportsSix
+    MAPPING = FixImportsSix.mapping
 
-MOVED_MODULE_FROMLIST = ("""\
-from ConfigParser import ConfigParser
-ConfigParser()
-""", """\
-from __future__ import absolute_import
-from six.moves.configparser import ConfigParser
-ConfigParser()
-""")
+    def test_import_module(self):
+        for old, new in self.MAPPING.items():
+            b = "import %s" % old
+            a = "import %s" % new
+            self.check(b, a)
 
+            b = "import foo, %s, bar" % old
+            a = "import foo, %s, bar" % new
+            self.check(b, a)
 
-def test_moved_module():
-    check_on_input(*MOVED_MODULE)
+    def test_import_from(self):
+        for old, new in self.MAPPING.items():
+            b = "from %s import foo" % old
+            a = "from %s import foo" % new
+            self.check(b, a)
 
-def test_moved_module_fromlist():
-    check_on_input(*MOVED_MODULE_FROMLIST)
+            b = "from %s import foo, bar" % old
+            a = "from %s import foo, bar" % new
+            self.check(b, a)
 
-@unittest.skipIf(sys.version_info[0] >= 3, "Test only runs on Python 2")
-def test_validate_mapping():
-    for py2_name, six_name in fix_imports_six.FixImportsSix.mapping.items():
-        try:
-            __import__(py2_name)
-            __import__(six_name)
-        except ImportError:
-            if 'tkinter' in six_name:
-                # Ignore error if tkinter not installed
-                if tkinter is not None:
-                    raise
-            elif 'winreg' in six_name:
-                # Ignore error if we're not on Windows
-                if sys.platform.startswith('win'):
-                    raise
-            else:
-                raise
+            b = "from %s import (yes, no)" % old
+            a = "from %s import (yes, no)" % new
+            self.check(b, a)
+
+    def test_import_module_as(self):
+        for old, new in self.MAPPING.items():
+            b = "import %s as foo_bar" % old
+            a = "import %s as foo_bar" % new
+            self.check(b, a)
+
+            b = "import %s as foo_bar" % old
+            a = "import %s as foo_bar" % new
+            self.check(b, a)
+
+    def test_import_from_as(self):
+        for old, new in self.MAPPING.items():
+            b = "from %s import foo as bar" % old
+            a = "from %s import foo as bar" % new
+            self.check(b, a)
+
+    def test_star(self):
+        for old, new in self.MAPPING.items():
+            b = "from %s import *" % old
+            a = "from %s import *" % new
+            self.check(b, a)
+
+    def test_import_module_usage(self):
+        for old, new in self.MAPPING.items():
+            b = """
+                import %s
+                foo(%s.bar)
+                """ % (old, old)
+            a = """
+                import %s
+                foo(%s.bar)
+                """ % (new, new)
+            self.check(b, a)
+
+            b = """
+                from %s import x
+                %s = 23
+                """ % (old, old)
+            a = """
+                from %s import x
+                %s = 23
+                """ % (new, old)
+            self.check(b, a)
+
+            s = """
+                def f():
+                    %s.method()
+                """ % (old,)
+            self.unchanged(s)
+
+            # test nested usage
+            b = """
+                import %s
+                %s.bar(%s.foo)
+                """ % (old, old, old)
+            a = """
+                import %s
+                %s.bar(%s.foo)
+                """ % (new, new, new)
+            self.check(b, a)
+
+            b = """
+                import %s
+                x.%s
+                """ % (old, old)
+            a = """
+                import %s
+                x.%s
+                """ % (new, old)
+            self.check(b, a)

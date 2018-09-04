@@ -1,16 +1,12 @@
-from __future__ import absolute_import
-
-from utils import check_on_input
+from fixertestcase import FixerTestCase
 
 
-BASESTRING = ("""\
-isinstance(x, basestring)
-""", """\
-from __future__ import absolute_import
-import six
-isinstance(x, six.string_types)
-""")
+class Test_basestring(FixerTestCase):
+    fixer = "basestring"
+
+    def test_basestring(self):
+        b = """isinstance(x, basestring)"""
+        a = """import six\nisinstance(x, six.string_types)"""
+        self.check(b, a)
 
 
-def test_basestring():
-    check_on_input(*BASESTRING)

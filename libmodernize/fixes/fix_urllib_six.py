@@ -1,6 +1,8 @@
 """Fix changes imports of urllib which are now incompatible.
-   This is a copy of Lib/lib2to3/fixes/fix_urllib.py, but modified to point to the
-   six.moves locations for new libraries instead of the Python 3 locations.
+   This is a copy of Lib/lib2to3/fixes/fix_urllib.py, but modified to point
+   to the    six.moves locations for new libraries instead of the Python 3
+   locations.
+   Extended by CONTACT Software GmbH.
 """
 # This is a derived work of Lib/lib2to3/fixes/fix_urllib.py. That file
 # is under the copyright of the Python Software Foundation and licensed
@@ -15,9 +17,8 @@
 
 # Local imports
 from lib2to3.fixes.fix_imports import alternates, FixImports
-from lib2to3 import fixer_base
 from lib2to3.fixer_util import (Name, Comma, FromImport, Newline,
-                                find_indentation, Node, syms)
+                                find_indentation, Node, syms, does_tree_import)
 
 MAPPING = {"urllib":  [
                 ("six.moves.urllib.request",
@@ -31,7 +32,7 @@ MAPPING = {"urllib":  [
                      "splittype", "splituser", "splitvalue", ]),
                 ("six.moves.urllib.error",
                     ["ContentTooShortError"])],
-           "urllib2" : [
+           "urllib2": [
                 ("six.moves.urllib.request",
                     ["urlopen", "install_opener", "build_opener",
                      "Request", "OpenerDirector", "BaseHandler",
@@ -48,15 +49,15 @@ MAPPING = {"urllib":  [
                      "UnknownHandler"]),
                 ("six.moves.urllib.error",
                     ["URLError", "HTTPError"]),
-           ]
-}
+                ]
+           }
 
 # Duplicate the url parsing functions for urllib2.
 MAPPING["urllib2"].append(MAPPING["urllib"][1])
 
 
 def build_pattern():
-    bare = set()
+    # bare = set()
     for old_module, changes in MAPPING.items():
         for change in changes:
             new_module, members = change
@@ -91,13 +92,15 @@ class FixUrllibSix(FixImports):
         import_mod = results.get("module")
         pref = import_mod.prefix
 
-        names = []
-
-        # create a Node list of the replacement modules
-        for name in MAPPING[import_mod.value][:-1]:
-            names.extend([Name(name[0], prefix=pref), Comma()])
-        names.append(Name(MAPPING[import_mod.value][-1][0], prefix=pref))
-        import_mod.replace(names)
+        if does_tree_import(None, 'six', node):
+            # remove node with newline (parent == simple_stmt)
+            if hasattr(node, 'parent'):
+                if node.parent.type == syms.simple_stmt:
+                    node.parent.remove()
+            else:
+                node.remove()
+        else:
+            import_mod.replace(Name('six', pref))
 
     def transform_member(self, node, results):
         """Transform for imports of specific module elements. Replaces
@@ -132,11 +135,11 @@ class FixUrllibSix(FixImports):
             for member in members:
                 # we only care about the actual members
                 if member.type == syms.import_as_name:
-                    as_name = member.children[2].value
+                    # as_name = member.children[2].value
                     member_name = member.children[0].value
                 else:
                     member_name = member.value
-                    as_name = None
+                    # as_name = None
                 if member_name != u",":
                     for change in MAPPING[mod_member.value]:
                         if member_name in change[1]:
@@ -147,6 +150,7 @@ class FixUrllibSix(FixImports):
             new_nodes = []
             indentation = find_indentation(node)
             first = True
+
             def handle_name(name, prefix):
                 if name.type == syms.import_as_name:
                     kids = [Name(name.children[0].value, prefix=prefix),

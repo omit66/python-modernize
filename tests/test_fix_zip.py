@@ -1,64 +1,70 @@
-from __future__ import absolute_import
-
-from utils import check_on_input
+from fixertestcase import FixerTestCase
 
 
-ZIP_CALL_NO_ARGS = ("""\
-zip()
-""", """\
-from __future__ import absolute_import
-from six.moves import zip
-list(zip())
-""")
+class Test_zip(FixerTestCase):
+    fixer = "zip"
 
-ZIP_CALL_1_ARG = ("""\
-zip(x)
-""", """\
-from __future__ import absolute_import
-from six.moves import zip
-list(zip(x))
-""")
+    def check(self, b, a):
+        self.unchanged("from six.moves import zip; " + b, a)
+        super(Test_zip, self).check(b, a)
 
-ZIP_CALL_2_ARGS = ("""\
-zip(x, y)
-zip(w, z)
-""", """\
-from __future__ import absolute_import
-from six.moves import zip
-list(zip(x, y))
-list(zip(w, z))
-""")
+    def test_zip_basic(self):
+        b = """x = zip(a, b, c)"""
+        a = """import six\nx = list(six.moves.zip(a, b, c))"""
+        self.check(b, a)
 
-ZIP_CALL_STAR_ARGS = ("""\
-zip(*args)
-""", """\
-from __future__ import absolute_import
-from six.moves import zip
-list(zip(*args))
-""")
+        b = """x = len(zip(a, b))"""
+        a = """import six\nx = len(list(six.moves.zip(a, b)))"""
+        self.check(b, a)
 
-ZIP_ITERATOR_CONTEXT = ("""\
-for a in zip(x):
-    pass
-""", """\
-from __future__ import absolute_import
-from six.moves import zip
-for a in zip(x):
-    pass
-""")
+    def test_zip_nochange(self):
+        a = """b.join(zip(a, b))"""
+        self.unchanged(a)
+        a = """(a + foo(5)).join(zip(a, b))"""
+        self.unchanged(a)
+        a = """iter(zip(a, b))"""
+        self.unchanged(a)
+        a = """list(zip(a, b))"""
+        self.unchanged(a)
+        a = """list(zip(a, b))[0]"""
+        self.unchanged(a)
+        a = """set(zip(a, b))"""
+        self.unchanged(a)
+        a = """set(zip(a, b)).pop()"""
+        self.unchanged(a)
+        a = """tuple(zip(a, b))"""
+        self.unchanged(a)
+        a = """any(zip(a, b))"""
+        self.unchanged(a)
+        a = """all(zip(a, b))"""
+        self.unchanged(a)
+        a = """sum(zip(a, b))"""
+        self.unchanged(a)
+        a = """sorted(zip(a, b))"""
+        self.unchanged(a)
+        a = """sorted(zip(a, b), key=blah)"""
+        self.unchanged(a)
+        a = """sorted(zip(a, b), key=blah)[0]"""
+        self.unchanged(a)
+        a = """enumerate(zip(a, b))"""
+        self.unchanged(a)
+        a = """enumerate(zip(a, b), start=1)"""
+        self.unchanged(a)
+        a = """for i in zip(a, b): pass"""
+        self.unchanged(a)
+        a = """[x for x in zip(a, b)]"""
+        self.unchanged(a)
+        a = """(x for x in zip(a, b))"""
+        self.unchanged(a)
 
+    def test_six_import(self):
+        a = "from six.moves import spam, zip, eggs; zip(a, b)"
+        self.unchanged(a)
 
-def test_zip_call_no_args():
-    check_on_input(*ZIP_CALL_NO_ARGS)
+        b = """from six.moves import spam, eggs\nx = zip(a, b)"""
+        a = """from six.moves import spam, eggs\nimport six\n""" \
+            """x = list(six.moves.zip(a, b))"""
+        self.check(b, a)
 
-def test_zip_call_1_arg():
-    check_on_input(*ZIP_CALL_1_ARG)
-
-def test_zip_call_2_args():
-    check_on_input(*ZIP_CALL_2_ARGS)
-
-def test_zip_call_star_args():
-    check_on_input(*ZIP_CALL_STAR_ARGS)
-
-def test_zip_iterator_context():
-    check_on_input(*ZIP_ITERATOR_CONTEXT)
+        a = "from six.moves import *; zip(a, b)"
+        self.unchanged(a)
