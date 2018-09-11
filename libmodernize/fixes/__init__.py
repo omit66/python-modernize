@@ -104,6 +104,7 @@ lib2to3_fix_names_stage2 = set([
 ])
 
 libmodernize_fix_names_stage1 = set([
+    'libmodernize.fixes.fix_import',
     'libmodernize.fixes.fix_intern',
     'libmodernize.fixes.fix_print',
     'libmodernize.fixes.fix_raise',

@@ -51,7 +51,10 @@ def main(args=None):
                       help="Fix up doctests only.")
     parser.add_option("-f", "--fix", action="append", default=[],
                       help="Each FIX specifies a transformation; '-f default' "
-                           "includes default fixers.")
+                           "includes default fixers. Either use '-f fix_division"
+			   "-f fix_metaclass' etc. or use the fully-qualified "
+                           "module name: '-f lib2to3.fixes.fix_types "
+                           "-f libmodernize.fixes.fix_unicode_keep_u'")
     parser.add_option("--fixers-here", action="store_true",
                       help="Add current working directory to python path (so "
                            "fixers can be found)")

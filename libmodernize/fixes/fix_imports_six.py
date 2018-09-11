@@ -15,8 +15,8 @@ class FixImportsSix(fix_imports.FixImports):
         'cookielib': 'six.moves.http_cookiejar',
         'cPickle': 'six.moves.cPickle',
         'Dialog': 'six.moves.tkinter_dialog',
-        'dummy_thread': 'six.moves._dummy_thread',
-        # cStringIO.StringIO()
+        #'dummy_thread': 'six.moves._dummy_thread',
+        #'cStringIO.StringIO': 'six.moves.cStringIO',
         # email.MIMEBase
         # email.MIMEMultipart
         # email.MIMENonMultipart
