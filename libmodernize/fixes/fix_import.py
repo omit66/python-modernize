@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 from lib2to3.fixes import fix_import
 from lib2to3.fixer_util import syms
-import libmodernize
 
 
 class FixImport(fix_import.FixImport):
@@ -20,5 +19,6 @@ class FixImport(fix_import.FixImport):
             return
 
         # If there are any non-future imports, add absolute_import
-        libmodernize.add_future(node, 'absolute_import')
+        # this is not necessary above python 2.5
+        # libmodernize.add_future(node, 'absolute_import')
         return super(FixImport, self).transform(node, results)
