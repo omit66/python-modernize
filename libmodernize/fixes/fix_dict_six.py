@@ -57,7 +57,6 @@ class FixDictSix(fixer_base.BaseFix):
         head = [n.clone() for n in head]
         tail = [n.clone() for n in tail]
         # no changes neccessary if the call is in a special context
-        self.parentIsList = False
         special = not tail and self.in_special_context(node, isiter or isview)
         new = pytree.Node(syms.power, head)
         new.prefix = u""
@@ -75,7 +74,7 @@ class FixDictSix(fixer_base.BaseFix):
             new = Call(Name('list'), [new])
             touch_import(None, 'six', node)
         else:
-            # method_name is "keys"; removed it and cast the dict to list
+            # method_name is "keys"; remove it and cast the dict to list
             new = Call(Name(u"list"), [new])
 
         if tail:
@@ -99,6 +98,7 @@ class FixDictSix(fixer_base.BaseFix):
             # py2 keys() return a list and list(d.keys()) would be inefficcient
             if results['func'].value == 'list' and not isiter:
                 # remove the call list if the child is not an iterator
+                node.prefix = results['parent'].prefix
                 results['parent'].replace([node])
                 return False
             return results["func"].value in fixer_util.consuming_calls
