@@ -15,12 +15,17 @@ class FixImportsSix(fix_imports.FixImports):
         'cookielib': 'six.moves.http_cookiejar',
         'cPickle': 'six.moves.cPickle',
         'Dialog': 'six.moves.tkinter_dialog',
-        #'dummy_thread': 'six.moves._dummy_thread',
-        #'cStringIO.StringIO': 'six.moves.cStringIO',
+        'dummy_thread': 'six.moves._dummy_thread',
+        'cStringIO.StringIO': 'six.moves.cStringIO',
         # email.MIMEBase
         # email.MIMEMultipart
         # email.MIMENonMultipart
         # email.MIMEText
+        'email.MIMEMultipart': 'email_mime_multipart',
+        'email.MIMENonMultipart':  'email_mime_nonmultipart',
+        'email.MIMEText':  'email_mime_text',
+        'email.MIMEBASE': 'email_mime_base',
+
         'FileDialog': 'six.moves.tkinter_filedialog',
         'gdbm': 'six.moves.dbm_gnu',
         'htmlentitydefs': 'six.moves.html_entities',
