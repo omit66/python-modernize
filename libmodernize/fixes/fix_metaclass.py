@@ -1,12 +1,12 @@
 # coding: utf-8
-"""Fixer for __metaclass__ = X -> (six.with_metaclass(X)) methods.
+"""Fixer for __metaclass__ = X -> (six.add_metaclass(X)) methods.
    The various forms of classdef (inherits nothing, inherits once, inherits
    many) don't parse the same in the CST, so we look at ALL classes for
    a __metaclass__ and if we find one normalize the inherits to all be
    an arglist.
    For one-liner classes ('class X: pass') there is no indent/dedent so
    we normalize those into having a suite.
-   Moving the __metaclass__ into the classdef can also cause the class
+   Moving the __metaclass__ into before the classdef can also cause the class
    body to be empty so there is some special casing for that as well.
    This fixer also tries very hard to keep original indenting and spacing
    in all those corner cases.
