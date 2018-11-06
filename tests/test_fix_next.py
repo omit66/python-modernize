@@ -146,7 +146,7 @@ class Test_next(FixerTestCase):
         a = """\
             import six
 
-            class A(six.Iterator, object):
+            class A(six.Iterator):
                 def __next__(self):
                     pass
             """

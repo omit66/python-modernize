@@ -115,6 +115,10 @@ def is_subtree(root, node):
 def insert_object(node, idx, subs=[]):
     node.insert_child(idx, RParen())
     for sub in subs:
+        # skip object and avoid erros. six.Iterator inherits from object and is
+        # an alias for object in python.
+        if isinstance(sub, Leaf) and sub.value == "object":
+            continue
         sub.prefix = u' '
         node.insert_child(idx, sub)
         node.insert_child(idx, Leaf(token.COMMA, ','))
