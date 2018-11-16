@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from .utils import check_on_input
+from .fixertestcase import FixerTestCase
 
 
 PRINT_BARE = ("""\
@@ -52,23 +52,27 @@ from __future__ import print_function
 print('Hello', end=' ', file=x)
 """)
 
-def test_print_bare():
-    check_on_input(*PRINT_BARE)
 
-def test_print_simple():
-    check_on_input(*PRINT_SIMPLE)
+class Test_print(FixerTestCase):
+    fixer = "print"
 
-def test_print_multiple():
-    check_on_input(*PRINT_MULTIPLE)
+    def test_print_bare(self):
+        self.check(*PRINT_BARE)
 
-def test_print_with_parens():
-    check_on_input(*PRINT_WITH_PARENS)
+    def test_print_simple(self):
+        self.check(*PRINT_SIMPLE)
 
-def test_print_with_comma():
-    check_on_input(*PRINT_WITH_COMMA)
+    def test_print_multiple(self):
+        self.check(*PRINT_MULTIPLE)
 
-def test_print_to_stream():
-    check_on_input(*PRINT_TO_STREAM)
+    def test_print_with_parens(self):
+        self.check(*PRINT_WITH_PARENS)
 
-def test_print_to_stream_with_comma():
-    check_on_input(*PRINT_TO_STREAM_WITH_COMMA)
+    def test_print_with_comma(self):
+        self.check(*PRINT_WITH_COMMA)
+
+    def test_print_to_stream(self):
+        self.check(*PRINT_TO_STREAM)
+
+    def test_print_to_stream_with_comma(self):
+        self.check(*PRINT_TO_STREAM_WITH_COMMA)
