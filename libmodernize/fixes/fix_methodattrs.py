@@ -22,7 +22,7 @@ class FixMethodattrs(fixer_base.BaseFix):
 
     def transform(self, node, results):
         attr = results["attr"][0]
-        new = unicode(MAP[attr.value])
+        new = MAP[attr.value]
         if attr.value == "im_class":
             self.warning(node,
                          """Skipping im_class. This is not safe for unbound """
