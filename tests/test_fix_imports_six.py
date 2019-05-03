@@ -1,10 +1,12 @@
-from fixertestcase import FixerTestCase
+from __future__ import absolute_import
+from .fixertestcase import FixerTestCase
 
 
 class Test_imports_six(FixerTestCase):
     fixer = "imports_six"
-    from libfuturize.fixes.fix_imports_six import FixImportsSix
-    MAPPING = FixImportsSix.mapping
+    # from libmodernize.fixes.fix_imports_six import FixImportsSix
+    from libmodernize.fixes import fix_imports_six
+    MAPPING = fix_imports_six.MAPPING
 
     def test_import_module(self):
         for old, new in self.MAPPING.items():

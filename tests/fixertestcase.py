@@ -1,6 +1,7 @@
 # This file is taken from python-future
 
 # test case for fixers, taken from future
+from __future__ import absolute_import
 import os
 import os.path
 from itertools import chain

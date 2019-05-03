@@ -1,7 +1,8 @@
 # Test code for fix_getcwdu.py
 
 # Python imports
-from fixertestcase import FixerTestCase
+from __future__ import absolute_import
+from .fixertestcase import FixerTestCase
 
 
 class Test_getcwdu(FixerTestCase):

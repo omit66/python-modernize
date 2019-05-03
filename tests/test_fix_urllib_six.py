@@ -1,9 +1,10 @@
-from fixertestcase import FixerTestCase
+from __future__ import absolute_import
+from .fixertestcase import FixerTestCase
 
 
 class Test_urllib(FixerTestCase):
     fixer = "urllib_six"
-    from libfuturize.fixes.fix_urllib import MAPPING as modules
+    from libmodernize.fixes.fix_urllib_six import MAPPING as modules
 
     def test_import_module(self):
         for old, changes in self.modules.items():

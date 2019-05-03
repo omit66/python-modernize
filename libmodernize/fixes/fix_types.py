@@ -24,6 +24,7 @@ There should be another fixer that handles at least the following constants:
 from lib2to3 import fixer_base
 from lib2to3.fixer_util import Name
 from lib2to3.fixer_util import touch_import
+import six
 
 _TYPE_MAPPING = {
         'BooleanType': 'bool',
@@ -59,7 +60,7 @@ class FixTypes(fixer_base.BaseFix):
     PATTERN = '|'.join(_pats)
 
     def transform(self, node, results):
-        new_value = unicode(_TYPE_MAPPING.get(results["name"].value))
+        new_value = six.text_type(_TYPE_MAPPING.get(results["name"].value))
         if new_value:
             if u'six' in new_value:
                 touch_import(None, u'six', node)

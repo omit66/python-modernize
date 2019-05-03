@@ -1,8 +1,9 @@
 # Test code for fix_dict.py
 
 # Python imports
+from __future__ import absolute_import
 from lib2to3 import fixer_util
-from fixertestcase import FixerTestCase
+from .fixertestcase import FixerTestCase
 
 
 class Test_dict(FixerTestCase):
@@ -34,9 +35,8 @@ class Test_dict(FixerTestCase):
         self.check(b, a)
 
         b = "keys = list(constants.keys())"
-	a = "keys = list(constants)"
-	self.check(b, a)
-
+        a = "keys = list(constants)"
+        self.check(b, a)
 
     def test_trailing_comment(self):
         b = "d.keys() # foo"

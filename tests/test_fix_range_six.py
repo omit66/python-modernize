@@ -1,6 +1,7 @@
 """ Test for fix_range  """
 
-from fixertestcase import FixerTestCase
+from __future__ import absolute_import
+from .fixertestcase import FixerTestCase
 from lib2to3 import fixer_util
 
 
